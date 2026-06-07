@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PNRao · People Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#eceaf2; --panel:#ffffff; --ink:#241d31; --muted:#736c81; --line:#e7e3ef;
+  --purple:#7b2e96; --purple-d:#5d2475; --purple-dim:#dccbe6; --purple-hover:#9a45b4;
+  --green:#1f9d6b; --red:#e2556a; --blue:#3f7fd6; --teal:#0e8c8c; --gold:#dd9b2e; --pink:#d65a9e;
+  --rail1:#103f3a; --rail2:#1f7a4d;
+  --shadow:0 1px 2px rgba(36,29,49,.05),0 10px 26px -16px rgba(36,29,49,.28);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.4;-webkit-font-smoothing:antialiased}
+.app{display:flex;min-height:100vh}
+.rail{width:64px;flex:0 0 64px;background:linear-gradient(180deg,var(--rail1),var(--rail2));
+  display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px 0;position:sticky;top:0;height:100vh}
+.rail .logo{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.14);display:grid;place-items:center;color:#fff;font-size:18px;margin-bottom:10px}
+.rail button{width:42px;height:42px;border:none;border-radius:12px;background:transparent;color:#cfeede;font-size:17px;cursor:pointer;display:grid;place-items:center;transition:background .15s,color .15s,transform .1s;position:relative}
+.rail button:hover{background:rgba(255,255,255,.16);color:#fff}
+.rail button:active{transform:scale(.94)}
+.rail button.spacer{margin-top:auto;cursor:default;background:none}
+.rail button .badge{position:absolute;top:5px;right:5px;width:9px;height:9px;border-radius:50%;background:var(--gold);border:2px solid var(--rail2);display:none}
+.rail button.has .badge{display:block}
+.rail .tip{position:absolute;left:56px;white-space:nowrap;background:var(--ink);color:#fff;font-size:12px;font-weight:600;padding:6px 10px;border-radius:8px;opacity:0;pointer-events:none;transform:translateX(-4px);transition:opacity .15s,transform .15s;z-index:30}
+.rail button:hover .tip{opacity:1;transform:translateX(0)}
+.main{flex:1;min-width:0;padding:clamp(16px,2.4vw,28px)}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.title h1{font-size:clamp(20px,2.6vw,27px);font-weight:800;letter-spacing:-.02em}
+.title .eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--purple);font-weight:700;margin-bottom:2px}
+.title p{color:var(--muted);font-size:13px;margin-top:3px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
+.chips .none{font-size:12.5px;color:var(--muted)}
+.chip{display:inline-flex;align-items:center;gap:7px;background:var(--purple);color:#fff;font-size:12px;font-weight:600;
+  padding:6px 8px 6px 12px;border-radius:999px;box-shadow:var(--shadow);animation:pop .18s}
+.chip .k{opacity:.7;font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-size:10px}
+.chip button{border:none;background:rgba(255,255,255,.22);color:#fff;width:18px;height:18px;border-radius:50%;cursor:pointer;font-size:12px;line-height:1;display:grid;place-items:center}
+.chip button:hover{background:rgba(255,255,255,.4)}
+.clearall{border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit;font-weight:700;font-size:12px;padding:7px 13px;border-radius:999px;cursor:pointer;transition:border-color .15s}
+.clearall:hover{border-color:var(--purple);color:var(--purple)}
+@keyframes pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+.kpi{position:relative;background:var(--panel);border-radius:16px;padding:16px 16px 14px;box-shadow:var(--shadow);overflow:hidden;border:1px solid var(--line);transition:transform .14s,box-shadow .14s;animation:rise .5s both}
+.kpi:hover{transform:translateY(-3px);box-shadow:0 6px 14px rgba(36,29,49,.08),0 18px 34px -18px rgba(36,29,49,.4)}
+.kpi::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:var(--kc,var(--purple))}
+.kpi .top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.kpi .ico{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:16px;background:color-mix(in srgb,var(--kc,var(--purple)) 14%,#fff)}
+.kpi .klabel{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:12px}
+.kpi .kval{font-size:clamp(22px,2.4vw,29px);font-weight:800;letter-spacing:-.02em;line-height:1.05;margin-top:3px}
+.kpi .kmeta{font-size:12px;color:var(--muted);margin-top:5px;display:flex;align-items:center;gap:5px}
+.kpi .kmeta .ar{font-weight:800}.kpi .kmeta .up{color:var(--green)}.kpi .kmeta .down{color:var(--red)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:15px 16px 12px;box-shadow:var(--shadow);min-width:0;animation:rise .5s both}
+.panel .ph{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.panel h3{font-size:13.5px;font-weight:700;letter-spacing:-.01em}
+.panel .tag{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--purple);background:color-mix(in srgb,var(--purple) 10%,#fff);padding:3px 8px;border-radius:999px}
+.panel .hint{font-size:11px;color:var(--muted);font-weight:500}
+.chart-box{position:relative;width:100%}
+.h-sm{height:210px}.h-md{height:236px}
+footer{margin-top:18px;padding-top:14px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.kpi:nth-child(1){animation-delay:.02s}.kpi:nth-child(2){animation-delay:.05s}.kpi:nth-child(3){animation-delay:.08s}.kpi:nth-child(4){animation-delay:.11s}
+.kpi:nth-child(5){animation-delay:.14s}.kpi:nth-child(6){animation-delay:.17s}.kpi:nth-child(7){animation-delay:.2s}.kpi:nth-child(8){animation-delay:.23s}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(4,1fr)}.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:820px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:680px){
+  .app{flex-direction:column}
+  .rail{width:100%;height:auto;flex-direction:row;position:sticky;top:0;z-index:40;padding:8px 10px;gap:6px}
+  .rail .logo{margin-bottom:0}
+  .rail button.spacer{margin-top:0;margin-left:auto}
+  .rail .tip{display:none}
+  .grid{grid-template-columns:1fr}
+  .chips{justify-content:flex-start}
+}
+@media(max-width:430px){.kpis{grid-template-columns:1fr 1fr}}
+.scrim{position:fixed;inset:0;background:rgba(36,29,49,.4);opacity:0;pointer-events:none;transition:opacity .25s;z-index:45}
+.scrim.show{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;height:100vh;width:330px;max-width:88vw;background:var(--panel);
+  box-shadow:-14px 0 44px -14px rgba(36,29,49,.45);transform:translateX(102%);transition:transform .28s cubic-bezier(.4,0,.2,1);z-index:46;display:flex;flex-direction:column}
+.drawer.show{transform:none}
+.drawer-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--line)}
+.drawer-head h2{font-size:17px;font-weight:800;letter-spacing:-.01em}
+.drawer-head button{border:none;background:var(--bg);width:30px;height:30px;border-radius:9px;font-size:18px;cursor:pointer;color:var(--muted);line-height:1}
+.drawer-head button:hover{color:var(--ink)}
+.drawer-body{padding:18px 20px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;flex:1}
+.fld label{display:block;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:6px}
+.fld select{width:100%;appearance:none;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 32px 10px 12px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;transition:border-color .15s;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23736c81' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.fld select:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 3px color-mix(in srgb,var(--purple) 18%,transparent)}
+.fld select.set{border-color:var(--purple);background-color:color-mix(in srgb,var(--purple) 7%,#fff);font-weight:600}
+.drawer-foot{display:flex;gap:10px;padding:16px 20px;border-top:1px solid var(--line)}
+.drawer-foot button{flex:1;border-radius:10px;padding:11px;font:inherit;font-weight:700;font-size:13px;cursor:pointer;border:1px solid var(--line);transition:.15s}
+.drawer-foot .ghost{background:var(--panel);color:var(--ink)}
+.drawer-foot .ghost:hover{border-color:var(--purple);color:var(--purple)}
+.drawer-foot .solid{background:var(--purple);color:#fff;border-color:var(--purple)}
+.drawer-foot .solid:hover{background:var(--purple-d)}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="rail">
+    <div class="logo">◈</div>
+    <button id="rFilter" class="has" title="Filters"><span>⛁</span><span class="badge"></span><span class="tip">Active filters</span></button>
+    <button id="rClear" title="Clear filters"><span>⟲</span><span class="tip">Clear all filters</span></button>
+    <button class="spacer" disabled></button>
+    <button id="rInfo" title="About"><span>i</span><span class="tip">Click any bar to filter</span></button>
+  </nav>
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" id="drawer" aria-hidden="true" aria-label="Filters">
+    <div class="drawer-head">
+      <h2>Filters</h2>
+      <button id="drawerClose" aria-label="Close filters">×</button>
+    </div>
+    <div class="drawer-body">
+      <div class="fld"><label>Department</label><select id="fDept"></select></div>
+      <div class="fld"><label>Gender</label><select id="fGender"></select></div>
+      <div class="fld"><label>Status</label><select id="fStatus"></select></div>
+      <div class="fld"><label>Performance Rating</label><select id="fRating"></select></div>
+      <div class="fld"><label>Hire Year</label><select id="fYear"></select></div>
+      <div class="fld"><label>Salary Band</label><select id="fBand"></select></div>
+    </div>
+    <div class="drawer-foot">
+      <button class="ghost" id="drawerReset">Reset all</button>
+      <button class="solid" id="drawerApply">Done</button>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="head">
+      <div class="title">
+        <div class="eyebrow">PNRao · Core Employee Data</div>
+        <h1>People Analytics</h1>
+        <p>Click any bar, point or slice to cross-filter the whole report. Click it again to clear.</p>
+      </div>
+      <div class="chips" id="chips"></div>
+    </div>
+    <section class="kpis" id="kpis"></section>
+    <section class="grid">
+      <div class="panel">
+        <div class="ph"><h3>Active Employees by Department</h3><span class="tag">Top 5</span></div>
+        <div class="chart-box h-md"><canvas id="cDept"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="ph"><h3>Active Employees</h3><span class="hint">by hire year</span></div>
+        <div class="chart-box h-md"><canvas id="cYear"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="ph"><h3>Average Salary by Department</h3><span class="tag">Top 5</span></div>
+        <div class="chart-box h-md"><canvas id="cSalDept"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="ph"><h3>Salary Distribution</h3><span class="hint">active headcount</span></div>
+        <div class="chart-box h-sm"><canvas id="cDist"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="ph"><h3>Average Salary by Gender</h3><span class="hint">USD</span></div>
+        <div class="chart-box h-sm"><canvas id="cGender"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="ph"><h3>Turnover Rate by Department</h3><span class="hint">terminated ÷ total</span></div>
+        <div class="chart-box h-sm"><canvas id="cTurn"></canvas></div>
+      </div>
+    </section>
+    <footer>
+      <span>Source · "Core Employee Data" — Employee Master · Compensation History · Job History</span>
+      <span id="stamp"></span>
+    </footer>
+  </main>
+</div>
+<script>window.DATA = {"employees": [{"id": "PNR-1001", "name": "David Wilson", "dept": "Human Resources", "title": "HR Coordinator", "gender": "Male", "hire": "2024-10-12", "term": null, "salary": 79555, "rating": 5, "status": "Active"}, {"id": "PNR-1002", "name": "Sarah Patel", "dept": "Quality Control", "title": "QC Manager", "gender": "Female", "hire": "2023-02-20", "term": null, "salary": 178117, "rating": 2, "status": "Active"}, {"id": "PNR-1003", "name": "Priya Williams", "dept": "Sales", "title": "Sales Associate", "gender": "Female", "hire": "2021-04-14", "term": null, "salary": 69207, "rating": 3, "status": "Active"}, {"id": "PNR-1004", "name": "Rohan Smith", "dept": "Quality Control", "title": "QC Manager", "gender": "Female", "hire": "2023-07-18", "term": null, "salary": 131521, "rating": 4, "status": "Active"}, {"id": "PNR-1005", "name": "Chris Singh", "dept": "Sales", "title": "Regional Sales Manager", "gender": "Non-binary", "hire": "2025-08-19", "term": null, "salary": 159490, "rating": 3, "status": "Active"}, {"id": "PNR-1006", "name": "Olivia Kumar", "dept": "Finance", "title": "Accountant", "gender": "Female", "hire": "2020-06-29", "term": null, "salary": 59744, "rating": 2, "status": "Active"}, {"id": "PNR-1007", "name": "Olivia Kumar", "dept": "Quality Control", "title": "QC Manager", "gender": "Female", "hire": "2020-02-23", "term": "2022-08-27", "salary": 127368, "rating": 2, "status": "Terminated"}, {"id": "PNR-1008", "name": "David Taylor", "dept": "Marketing", "title": "Marketing Manager", "gender": "Male", "hire": "2021-03-06", "term": null, "salary": 157926, "rating": 5, "status": "Active"}, {"id": "PNR-1009", "name": "David Williams", "dept": "Finance", "title": "Financial Analyst", "gender": "Female", "hire": "2024-10-10", "term": null, "salary": 76794, "rating": 5, "status": "Active"}, {"id": "PNR-1010", "name": "Sarah Patel", "dept": "Finance", "title": "Accountant", "gender": "Male", "hire": "2021-11-23", "term": null, "salary": 64644, "rating": 5, "status": "Active"}, {"id": "PNR-1011", "name": "Aarav Patel", "dept": "Quality Control", "title": "QC Manager", "gender": "Non-binary", "hire": "2026-01-21", "term": null, "salary": 130023, "rating": 4, "status": "Active"}, {"id": "PNR-1012", "name": "Priya Williams", "dept": "Marketing", "title": "Digital Marketer", "gender": "Male", "hire": "2023-05-14", "term": null, "salary": 61807, "rating": 2, "status": "Active"}, {"id": "PNR-1013", "name": "Rohan Singh", "dept": "Marketing", "title": "Digital Marketer", "gender": "Male", "hire": "2025-12-08", "term": null, "salary": 57423, "rating": 5, "status": "Active"}, {"id": "PNR-1014", "name": "Aditya Smith", "dept": "Finance", "title": "Accountant", "gender": "Female", "hire": "2025-01-07", "term": null, "salary": 72275, "rating": 5, "status": "Active"}, {"id": "PNR-1015", "name": "Emma Jones", "dept": "Research & Development", "title": "Lab Technician", "gender": "Female", "hire": "2018-09-21", "term": null, "salary": 58850, "rating": 5, "status": "Active"}, {"id": "PNR-1016", "name": "Aditya Williams", "dept": "Logistics", "title": "Warehouse Associate", "gender": "Female", "hire": "2023-07-22", "term": null, "salary": 69523, "rating": 2, "status": "Active"}, {"id": "PNR-1017", "name": "Aditya Patel", "dept": "Research & Development", "title": "Research Lead", "gender": "Female", "hire": "2020-09-26", "term": null, "salary": 92610, "rating": 3, "status": "Active"}, {"id": "PNR-1018", "name": "Saanvi Kumar", "dept": "Logistics", "title": "Logistics Coordinator", "gender": "Non-binary", "hire": "2020-07-24", "term": null, "salary": 71503, "rating": 3, "status": "Active"}, {"id": "PNR-1019", "name": "Rohan Williams", "dept": "IT Support", "title": "IT Manager", "gender": "Female", "hire": "2020-06-08", "term": null, "salary": 147872, "rating": 3, "status": "Active"}, {"id": "PNR-1020", "name": "Olivia Williams", "dept": "Human Resources", "title": "HR Coordinator", "gender": "Male", "hire": "2024-02-02", "term": null, "salary": 65269, "rating": 5, "status": "Active"}, {"id": "PNR-1021", "name": "John Patel", "dept": "Sales", "title": "Regional Sales Manager", "gender": "Female", "hire": "2023-09-10", "term": null, "salary": 173624, "rating": 2, "status": "Active"}, {"id": "PNR-1022", "name": "Aarav Jones", "dept": "Logistics", "title": "Logistics Coordinator", "gender": "Male", "hire": "2022-05-24", "term": "2027-06-03", "salary": 70144, "rating": 3, "status": "Terminated"}, {"id": "PNR-1023", "name": "Anika Brown", "dept": "Logistics", "title": "Logistics Coordinator", "gender": "Male", "hire": "2026-01-03", "term": null, "salary": 66371, "rating": 4, "status": "Active"}, {"id": "PNR-1024", "name": "John Jones", "dept": "Logistics", "title": "Warehouse Associate", "gender": "Male", "hire": "2019-03-16", "term": null, "salary": 60285, "rating": 2, "status": "Active"}, {"id": "PNR-1025", "name": "Mary Jones", "dept": "Finance", "title": "Controller", "gender": "Male", "hire": "2024-01-14", "term": "2025-12-17", "salary": 77948, "rating": 4, "status": "Terminated"}, {"id": "PNR-1026", "name": "Emma Singh", "dept": "Human Resources", "title": "Recruiter", "gender": "Non-binary", "hire": "2022-08-31", "term": null, "salary": 64455, "rating": 3, "status": "Active"}, {"id": "PNR-1027", "name": "Sarah Taylor", "dept": "Sales", "title": "Account Manager", "gender": "Non-binary", "hire": "2025-02-02", "term": null, "salary": 177328, "rating": 2, "status": "Active"}, {"id": "PNR-1028", "name": "Sarah Williams", "dept": "Quality Control", "title": "QC Manager", "gender": "Female", "hire": "2020-10-20", "term": null, "salary": 141467, "rating": 3, "status": "Active"}, {"id": "PNR-1029", "name": "Chris Jones", "dept": "Marketing", "title": "Marketing Coordinator", "gender": "Female", "hire": "2025-10-27", "term": "2026-07-24", "salary": 61400, "rating": 3, "status": "Terminated"}, {"id": "PNR-1030", "name": "Sarah Smith", "dept": "Human Resources", "title": "HR Coordinator", "gender": "Female", "hire": "2024-06-26", "term": null, "salary": 71740, "rating": 4, "status": "Active"}, {"id": "PNR-1031", "name": "Priya Wilson", "dept": "Marketing", "title": "Marketing Coordinator", "gender": "Non-binary", "hire": "2024-04-16", "term": null, "salary": 72116, "rating": 3, "status": "Active"}, {"id": "PNR-1032", "name": "Emma Singh", "dept": "Marketing", "title": "Digital Marketer", "gender": "Non-binary", "hire": "2024-06-22", "term": null, "salary": 83999, "rating": 5, "status": "Active"}, {"id": "PNR-1033", "name": "Emma Wilson", "dept": "Logistics", "title": "Warehouse Associate", "gender": "Female", "hire": "2022-01-28", "term": null, "salary": 77309, "rating": 4, "status": "Active"}, {"id": "PNR-1034", "name": "Anika Williams", "dept": "Production", "title": "Production Worker", "gender": "Non-binary", "hire": "2024-03-12", "term": "2024-11-25", "salary": 73627, "rating": 3, "status": "Terminated"}, {"id": "PNR-1035", "name": "Chris Singh", "dept": "Sales", "title": "Sales Associate", "gender": "Male", "hire": "2023-08-25", "term": "2028-11-14", "salary": 77526, "rating": 3, "status": "Terminated"}, {"id": "PNR-1036", "name": "Anika Kumar", "dept": "Quality Control", "title": "QC Manager", "gender": "Female", "hire": "2023-04-30", "term": "2026-06-18", "salary": 179987, "rating": 3, "status": "Terminated"}, {"id": "PNR-1037", "name": "Chris Williams", "dept": "Quality Control", "title": "QC Manager", "gender": "Female", "hire": "2021-04-02", "term": null, "salary": 168050, "rating": 3, "status": "Active"}, {"id": "PNR-1038", "name": "Priya Williams", "dept": "Logistics", "title": "Warehouse Associate", "gender": "Male", "hire": "2025-12-03", "term": null, "salary": 84286, "rating": 5, "status": "Active"}, {"id": "PNR-1039", "name": "David Wilson", "dept": "Human Resources", "title": "HR Generalist", "gender": "Non-binary", "hire": "2023-04-10", "term": null, "salary": 80094, "rating": 4, "status": "Active"}, {"id": "PNR-1040", "name": "Anika Brown", "dept": "Finance", "title": "Financial Analyst", "gender": "Female", "hire": "2019-06-25", "term": null, "salary": 78134, "rating": 4, "status": "Active"}, {"id": "PNR-1041", "name": "Michael Taylor", "dept": "Logistics", "title": "Logistics Coordinator", "gender": "Non-binary", "hire": "2023-11-26", "term": null, "salary": 68235, "rating": 2, "status": "Active"}, {"id": "PNR-1042", "name": "Mary Williams", "dept": "Production", "title": "Line Supervisor", "gender": "Non-binary", "hire": "2023-05-31", "term": null, "salary": 84885, "rating": 5, "status": "Active"}, {"id": "PNR-1043", "name": "Anika Jones", "dept": "IT Support", "title": "IT Manager", "gender": "Female", "hire": "2020-01-26", "term": "2020-12-19", "salary": 136205, "rating": 5, "status": "Terminated"}, {"id": "PNR-1044", "name": "Chris Brown", "dept": "Quality Control", "title": "QC Manager", "gender": "Male", "hire": "2020-04-01", "term": null, "salary": 152261, "rating": 2, "status": "Active"}, {"id": "PNR-1045", "name": "Mary Jones", "dept": "Logistics", "title": "Warehouse Associate", "gender": "Female", "hire": "2022-05-20", "term": null, "salary": 75480, "rating": 3, "status": "Active"}, {"id": "PNR-1046", "name": "Anika Williams", "dept": "Sales", "title": "Account Manager", "gender": "Non-binary", "hire": "2021-07-10", "term": null, "salary": 120299, "rating": 2, "status": "Active"}, {"id": "PNR-1047", "name": "Priya Wilson", "dept": "Marketing", "title": "Marketing Coordinator", "gender": "Male", "hire": "2026-02-20", "term": "2026-10-27", "salary": 81599, "rating": 4, "status": "Terminated"}, {"id": "PNR-1048", "name": "Mary Brown", "dept": "Production", "title": "Line Supervisor", "gender": "Male", "hire": "2022-04-20", "term": null, "salary": 73261, "rating": 2, "status": "Active"}, {"id": "PNR-1049", "name": "Mary Singh", "dept": "Research & Development", "title": "Scientist", "gender": "Non-binary", "hire": "2021-03-10", "term": null, "salary": 79972, "rating": 5, "status": "Active"}, {"id": "PNR-1050", "name": "David Jones", "dept": "Research & Development", "title": "Lab Technician", "gender": "Male", "hire": "2024-12-25", "term": null, "salary": 66808, "rating": 4, "status": "Active"}, {"id": "PNR-1051", "name": "Olivia Jones", "dept": "IT Support", "title": "IT Technician", "gender": "Female", "hire": "2020-03-16", "term": null, "salary": 67348, "rating": 2, "status": "Active"}, {"id": "PNR-1052", "name": "David Singh", "dept": "Human Resources", "title": "HR Coordinator", "gender": "Female", "hire": "2024-09-24", "term": null, "salary": 78821, "rating": 2, "status": "Active"}, {"id": "PNR-1053", "name": "Priya Williams", "dept": "Marketing", "title": "Marketing Manager", "gender": "Male", "hire": "2024-12-21", "term": "2028-04-27", "salary": 163773, "rating": 4, "status": "Terminated"}, {"id": "PNR-1054", "name": "Rohan Patel", "dept": "IT Support", "title": "Help Desk Specialist", "gender": "Male", "hire": "2020-05-19", "term": null, "salary": 79344, "rating": 4, "status": "Active"}, {"id": "PNR-1055", "name": "Aarav Sharma", "dept": "Production", "title": "Line Supervisor", "gender": "Non-binary", "hire": "2018-12-03", "term": null, "salary": 62078, "rating": 2, "status": "Active"}, {"id": "PNR-1056", "name": "Chris Kumar", "dept": "Human Resources", "title": "HR Generalist", "gender": "Female", "hire": "2022-11-07", "term": null, "salary": 70543, "rating": 5, "status": "Active"}, {"id": "PNR-1057", "name": "Saanvi Patel", "dept": "Finance", "title": "Financial Analyst", "gender": "Male", "hire": "2021-10-10", "term": "2026-10-03", "salary": 80552, "rating": 2, "status": "Terminated"}, {"id": "PNR-1058", "name": "Emma Williams", "dept": "Human Resources", "title": "HR Coordinator", "gender": "Male", "hire": "2019-01-17", "term": null, "salary": 83872, "rating": 2, "status": "Active"}, {"id": "PNR-1059", "name": "John Smith", "dept": "Logistics", "title": "Logistics Coordinator", "gender": "Female", "hire": "2018-08-23", "term": null, "salary": 55315, "rating": 5, "status": "Active"}, {"id": "PNR-1060", "name": "Olivia Brown", "dept": "Logistics", "title": "Warehouse Associate", "gender": "Female", "hire": "2021-12-16", "term": null, "salary": 69343, "rating": 2, "status": "Active"}, {"id": "PNR-1061", "name": "David Patel", "dept": "Sales", "title": "Sales Associate", "gender": "Female", "hire": "2021-06-10", "term": null, "salary": 83075, "rating": 2, "status": "Active"}, {"id": "PNR-1062", "name": "Sarah Patel", "dept": "Quality Control", "title": "QC Manager", "gender": "Male", "hire": "2023-10-05", "term": null, "salary": 172920, "rating": 2, "status": "Active"}, {"id": "PNR-1063", "name": "David Patel", "dept": "Quality Control", "title": "QC Inspector", "gender": "Female", "hire": "2025-01-01", "term": null, "salary": 65523, "rating": 2, "status": "Active"}, {"id": "PNR-1064", "name": "Chris Brown", "dept": "IT Support", "title": "Help Desk Specialist", "gender": "Non-binary", "hire": "2018-02-18", "term": null, "salary": 71285, "rating": 2, "status": "Active"}, {"id": "PNR-1065", "name": "David Smith", "dept": "IT Support", "title": "IT Technician", "gender": "Female", "hire": "2018-09-06", "term": null, "salary": 83368, "rating": 2, "status": "Active"}, {"id": "PNR-1066", "name": "Emma Patel", "dept": "Logistics", "title": "Logistics Coordinator", "gender": "Male", "hire": "2018-09-13", "term": null, "salary": 76723, "rating": 3, "status": "Active"}, {"id": "PNR-1067", "name": "Olivia Brown", "dept": "Research & Development", "title": "Scientist", "gender": "Female", "hire": "2025-08-18", "term": null, "salary": 61402, "rating": 5, "status": "Active"}, {"id": "PNR-1068", "name": "Saanvi Brown", "dept": "Human Resources", "title": "Recruiter", "gender": "Non-binary", "hire": "2026-01-23", "term": null, "salary": 55170, "rating": 4, "status": "Active"}, {"id": "PNR-1069", "name": "Priya Sharma", "dept": "Research & Development", "title": "Scientist", "gender": "Male", "hire": "2024-10-13", "term": null, "salary": 75671, "rating": 3, "status": "Active"}, {"id": "PNR-1070", "name": "Priya Kumar", "dept": "Marketing", "title": "Marketing Manager", "gender": "Female", "hire": "2020-06-19", "term": null, "salary": 173204, "rating": 3, "status": "Active"}, {"id": "PNR-1071", "name": "Anika Kumar", "dept": "Marketing", "title": "Marketing Coordinator", "gender": "Female", "hire": "2025-04-11", "term": null, "salary": 74597, "rating": 5, "status": "Active"}, {"id": "PNR-1072", "name": "Sarah Smith", "dept": "Quality Control", "title": "QC Inspector", "gender": "Male", "hire": "2018-11-18", "term": null, "salary": 70898, "rating": 3, "status": "Active"}, {"id": "PNR-1073", "name": "David Smith", "dept": "Marketing", "title": "Marketing Coordinator", "gender": "Non-binary", "hire": "2024-02-24", "term": "2025-04-08", "salary": 79528, "rating": 4, "status": "Terminated"}, {"id": "PNR-1074", "name": "Emma Jones", "dept": "Research & Development", "title": "Lab Technician", "gender": "Non-binary", "hire": "2019-03-23", "term": null, "salary": 58064, "rating": 2, "status": "Active"}, {"id": "PNR-1075", "name": "Saanvi Smith", "dept": "Production", "title": "Line Supervisor", "gender": "Male", "hire": "2020-05-21", "term": null, "salary": 58547, "rating": 4, "status": "Active"}, {"id": "PNR-1076", "name": "Olivia Wilson", "dept": "Research & Development", "title": "Lab Technician", "gender": "Male", "hire": "2021-04-19", "term": null, "salary": 71808, "rating": 4, "status": "Active"}, {"id": "PNR-1077", "name": "Aditya Sharma", "dept": "Human Resources", "title": "HR Generalist", "gender": "Female", "hire": "2018-08-22", "term": "2022-10-27", "salary": 80171, "rating": 4, "status": "Terminated"}, {"id": "PNR-1078", "name": "John Brown", "dept": "Logistics", "title": "Warehouse Associate", "gender": "Non-binary", "hire": "2026-03-11", "term": "2029-10-21", "salary": 61387, "rating": 2, "status": "Terminated"}, {"id": "PNR-1079", "name": "Olivia Singh", "dept": "IT Support", "title": "IT Technician", "gender": "Non-binary", "hire": "2023-08-13", "term": "2024-02-23", "salary": 57980, "rating": 2, "status": "Terminated"}, {"id": "PNR-1080", "name": "Priya Singh", "dept": "Finance", "title": "Financial Analyst", "gender": "Male", "hire": "2025-01-21", "term": null, "salary": 67944, "rating": 4, "status": "Active"}, {"id": "PNR-1081", "name": "Michael Jones", "dept": "Production", "title": "Operations Manager", "gender": "Non-binary", "hire": "2019-09-20", "term": null, "salary": 173615, "rating": 2, "status": "Active"}, {"id": "PNR-1082", "name": "Aditya Brown", "dept": "Logistics", "title": "Warehouse Associate", "gender": "Non-binary", "hire": "2023-04-02", "term": null, "salary": 64758, "rating": 2, "status": "Active"}, {"id": "PNR-1083", "name": "Mary Singh", "dept": "Sales", "title": "Regional Sales Manager", "gender": "Non-binary", "hire": "2021-12-09", "term": null, "salary": 132691, "rating": 5, "status": "Active"}, {"id": "PNR-1084", "name": "Emma Williams", "dept": "Human Resources", "title": "HR Coordinator", "gender": "Female", "hire": "2024-08-03", "term": null, "salary": 72798, "rating": 4, "status": "Active"}, {"id": "PNR-1085", "name": "Aarav Patel", "dept": "Human Resources", "title": "HR Generalist", "gender": "Non-binary", "hire": "2019-01-03", "term": null, "salary": 78441, "rating": 4, "status": "Active"}, {"id": "PNR-1086", "name": "Olivia Wilson", "dept": "Marketing", "title": "Marketing Manager", "gender": "Female", "hire": "2020-06-11", "term": "2022-07-22", "salary": 135646, "rating": 5, "status": "Terminated"}, {"id": "PNR-1087", "name": "Anika Patel", "dept": "Marketing", "title": "Digital Marketer", "gender": "Male", "hire": "2019-07-16", "term": null, "salary": 78825, "rating": 3, "status": "Active"}, {"id": "PNR-1088", "name": "Emma Jones", "dept": "Research & Development", "title": "Scientist", "gender": "Female", "hire": "2018-05-12", "term": null, "salary": 57927, "rating": 3, "status": "Active"}, {"id": "PNR-1089", "name": "Sarah Smith", "dept": "Finance", "title": "Accountant", "gender": "Non-binary", "hire": "2022-07-08", "term": null, "salary": 74364, "rating": 4, "status": "Active"}, {"id": "PNR-1090", "name": "Aditya Taylor", "dept": "Human Resources", "title": "HR Coordinator", "gender": "Female", "hire": "2020-05-27", "term": null, "salary": 61550, "rating": 4, "status": "Active"}, {"id": "PNR-1091", "name": "Priya Kumar", "dept": "Production", "title": "Line Supervisor", "gender": "Non-binary", "hire": "2022-05-28", "term": null, "salary": 74970, "rating": 5, "status": "Active"}, {"id": "PNR-1092", "name": "Anika Williams", "dept": "Logistics", "title": "Warehouse Associate", "gender": "Male", "hire": "2020-10-22", "term": null, "salary": 75454, "rating": 5, "status": "Active"}, {"id": "PNR-1093", "name": "Michael Sharma", "dept": "Production", "title": "Production Worker", "gender": "Female", "hire": "2022-11-20", "term": null, "salary": 72561, "rating": 4, "status": "Active"}, {"id": "PNR-1094", "name": "Saanvi Taylor", "dept": "Marketing", "title": "Digital Marketer", "gender": "Non-binary", "hire": "2022-03-06", "term": null, "salary": 60446, "rating": 2, "status": "Active"}, {"id": "PNR-1095", "name": "Rohan Singh", "dept": "Research & Development", "title": "Scientist", "gender": "Female", "hire": "2024-05-20", "term": null, "salary": 66521, "rating": 5, "status": "Active"}, {"id": "PNR-1096", "name": "David Jones", "dept": "Human Resources", "title": "HR Coordinator", "gender": "Male", "hire": "2025-07-23", "term": null, "salary": 68143, "rating": 2, "status": "Active"}, {"id": "PNR-1097", "name": "Sarah Singh", "dept": "Sales", "title": "Regional Sales Manager", "gender": "Female", "hire": "2025-11-16", "term": null, "salary": 138212, "rating": 2, "status": "Active"}, {"id": "PNR-1098", "name": "Rohan Brown", "dept": "Marketing", "title": "Marketing Manager", "gender": "Male", "hire": "2018-09-28", "term": null, "salary": 177880, "rating": 5, "status": "Active"}, {"id": "PNR-1099", "name": "Mary Sharma", "dept": "Sales", "title": "Sales Associate", "gender": "Female", "hire": "2025-03-18", "term": null, "salary": 73950, "rating": 2, "status": "Active"}, {"id": "PNR-1100", "name": "David Singh", "dept": "Logistics", "title": "Warehouse Associate", "gender": "Male", "hire": "2023-04-09", "term": null, "salary": 59132, "rating": 2, "status": "Active"}]};</script>
+<script>
+(function(){
+  const E=window.DATA.employees,C=window.DATA.comp||[];
+  const TODAY=new Date(2026,5,6);
+  const P='#7b2e96',PD='#dccbe6',PH='#9a45b4';
+  Chart.defaults.font.family="'Plus Jakarta Sans',sans-serif";
+  Chart.defaults.font.size=11.5;Chart.defaults.color='#736c81';
+  const F={dept:null,gender:null,year:null,band:null,status:null,rating:null};
+  const BANDS=[['$50–75K',50000,75000],['$75–100K',75000,100000],['$100–125K',100000,125000],['$125–150K',125000,150000],['$150K+',150000,1e9]];
+  const bandOf=s=>{for(const b of BANDS){if(s>=b[1]&&s<b[2])return b[0];}return BANDS[BANDS.length-1][0];};
+  function pass(e,except){
+    if(except!=='dept'&&F.dept&&e.dept!==F.dept)return false;
+    if(except!=='gender'&&F.gender&&e.gender!==F.gender)return false;
+    if(except!=='year'&&F.year&&e.hire.slice(0,4)!==F.year)return false;
+    if(except!=='band'&&F.band&&bandOf(e.salary)!==F.band)return false;
+    if(except!=='status'&&F.status&&e.status!==F.status)return false;
+    if(except!=='rating'&&F.rating&&String(e.rating)!==String(F.rating))return false;
+    return true;
+  }
+  const all=()=>E.filter(e=>pass(e,null));
+  const forDim=d=>E.filter(e=>pass(e,d));
+  const fmtUSD=n=>'$'+Math.round(n).toLocaleString('en-US');
+  const fmtK=n=>'$'+Math.round(n/1000)+'K';
+  const tenure=e=>{const end=e.term?new Date(e.term):TODAY;return(end-new Date(e.hire))/31557600000;};
+  const avg=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:0;
+  const valueLabels={id:'valueLabels',afterDatasetsDraw(chart){
+    const fmt=chart.$fmt;if(!fmt)return;
+    const{ctx}=chart;const horiz=chart.options.indexAxis==='y';
+    ctx.save();ctx.font="700 11px 'Plus Jakarta Sans',sans-serif";
+    chart.data.datasets.forEach((ds,di)=>{
+      const meta=chart.getDatasetMeta(di);if(meta.hidden)return;
+      meta.data.forEach((el,i)=>{
+        const v=ds.data[i];if(v==null||v===0)return;
+        const t=fmt(v);ctx.fillStyle='#241d31';
+        if(chart.config.type==='line'){ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(t,el.x,el.y-7);}
+        else if(horiz){ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillStyle='#5d2475';ctx.fillText(t,el.x+7,el.y);}
+        else{ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(t,el.x,el.y-6);}
+      });
+    });
+    ctx.restore();
+  }};
+  Chart.register(valueLabels);
+  function barColors(labels,dim){const sel=F[dim];return labels.map(l=>sel?(String(l)===String(sel)?P:PD):P);}
+  const baseOpts=(extra={})=>Object.assign({
+    responsive:true,maintainAspectRatio:false,animation:{duration:500},
+    layout:{padding:{top:14,right:18}},
+    onHover:(ev,els)=>{ev.native.target.style.cursor=els.length?'pointer':'default';},
+    plugins:{legend:{display:false},tooltip:{backgroundColor:'#241d31',padding:10,cornerRadius:8,displayColors:false,
+      titleFont:{weight:'700'},bodyFont:{weight:'500'}}}
+  },extra);
+  function hbar(id,onClick){return new Chart(document.getElementById(id),{type:'bar',
+    data:{labels:[],datasets:[{data:[],backgroundColor:P,hoverBackgroundColor:PH,borderRadius:6,maxBarThickness:26}]},
+    options:baseOpts({indexAxis:'y',onClick,
+      scales:{x:{display:false,grid:{display:false},beginAtZero:true},
+              y:{grid:{display:false,drawBorder:false},ticks:{font:{weight:'600'}}}}})});}
+  function vbar(id,onClick){return new Chart(document.getElementById(id),{type:'bar',
+    data:{labels:[],datasets:[{data:[],backgroundColor:P,hoverBackgroundColor:PH,borderRadius:6,maxBarThickness:46}]},
+    options:baseOpts({onClick,
+      scales:{x:{grid:{display:false,drawBorder:false},ticks:{font:{weight:'600'},maxRotation:0,minRotation:0,autoSkip:false,callback:function(v){const l=this.getLabelForValue(v);return l.length>11?l.slice(0,10)+'…':l;}}},
+              y:{display:false,grid:{display:false},beginAtZero:true}}})});}
+  const charts={};
+  charts.dept=hbar('cDept',(e,els)=>{if(els.length)toggle('dept',charts.dept.data.labels[els[0].index]);});
+  charts.salDept=vbar('cSalDept',(e,els)=>{if(els.length)toggle('dept',charts.salDept.data.labels[els[0].index]);});
+  charts.gender=vbar('cGender',(e,els)=>{if(els.length)toggle('gender',charts.gender.data.labels[els[0].index]);});
+  charts.dist=vbar('cDist',(e,els)=>{if(els.length)toggle('band',charts.dist.data.labels[els[0].index]);});
+  charts.turn=hbar('cTurn',(e,els)=>{if(els.length)toggle('dept',charts.turn.data.labels[els[0].index]);});
+  charts.year=new Chart(document.getElementById('cYear'),{type:'line',
+    data:{labels:[],datasets:[{data:[],borderColor:P,backgroundColor:'rgba(123,46,150,.16)',fill:true,tension:.35,
+      pointRadius:4,pointHoverRadius:6,pointBackgroundColor:P,pointBorderColor:'#fff',pointBorderWidth:2,borderWidth:2.5}]},
+    options:baseOpts({onClick:(e,els)=>{if(els.length)toggle('year',charts.year.data.labels[els[0].index]);},
+      scales:{x:{grid:{display:false},ticks:{font:{weight:'600'}}},y:{display:false,beginAtZero:true}}})});
+  charts.dept.$fmt=v=>v;charts.turn.$fmt=v=>v+'%';charts.year.$fmt=v=>v;
+  charts.salDept.$fmt=fmtUSD;charts.gender.$fmt=fmtUSD;charts.dist.$fmt=v=>v;
+  function toggle(dim,val){val=String(val);F[dim]=(F[dim]===val)?null:val;render();}
+  function clearAll(){F.dept=F.gender=F.year=F.band=null;render();}
+  function topN(map,n){return Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,n);}
+  function countBy(rows,key){const m={};rows.forEach(r=>{const k=typeof key==='function'?key(r):r[key];m[k]=(m[k]||0)+1;});return m;}
+  function renderKPIs(){
+    const rows=all();const act=rows.filter(e=>e.status==='Active');
+    const tot=rows.length,term=rows.filter(e=>e.status==='Terminated').length;
+    const avgSal=avg(act.map(e=>e.salary));
+    const ten=avg(act.map(tenure));
+    const hp=rows.filter(e=>e.rating>=4).length;
+    const fem=act.filter(e=>e.gender==='Female').length;
+    const fAvg=avg(rows.filter(e=>e.gender==='Female').map(e=>e.salary));
+    const mAvg=avg(rows.filter(e=>e.gender==='Male').map(e=>e.salary));
+    const gap=mAvg?((fAvg-mAvg)/mAvg*100):0;
+    const cards=[
+      {c:'var(--green)',i:'👥',l:'Active Employees',v:act.length,m:`<span>of ${tot} total</span>`},
+      {c:'var(--purple)',i:'💰',l:'Average Salary',v:avgSal?fmtK(avgSal):'—',m:`<span>active base pay</span>`},
+      {c:'var(--red)',i:'📉',l:'Termination Rate',v:tot?(term/tot*100).toFixed(1)+'%':'—',m:`<span>${term} of ${tot}</span>`},
+      {c:'var(--teal)',i:'⏳',l:'Average Tenure',v:act.length?ten.toFixed(1)+' yrs':'—',m:`<span>industry 3.8 yrs</span>`},
+      {c:'var(--purple)',i:'⭐',l:'High Performers',v:tot?Math.round(hp/tot*100)+'%':'—',m:`<span>${hp} rated 4–5</span>`},
+      {c:'var(--pink)',i:'👩',l:'Female Workforce',v:act.length?Math.round(fem/act.length*100)+'%':'—',m:`<span>industry 35%</span>`},
+      {c:'var(--blue)',i:'⚖️',l:'Gender Pay Gap',v:(fAvg&&mAvg)?'Women '+(gap>=0?'+':'')+gap.toFixed(0)+'%':'—',m:`<span>vs male avg</span>`},
+      {c:'var(--gold)',i:'🏢',l:'Departments',v:[...new Set(act.map(e=>e.dept))].length,m:`<span>active units</span>`},
+    ];
+    document.getElementById('kpis').innerHTML=cards.map(c=>`
+      <div class="kpi" style="--kc:${c.c}">
+        <div class="top"><div class="ico">${c.i}</div></div>
+        <div class="klabel">${c.l}</div>
+        <div class="kval">${c.v}</div>
+        <div class="kmeta">${c.m}</div>
+      </div>`).join('');
+  }
+  function setBar(ch,pairs,dim){
+    ch.data.labels=pairs.map(p=>p[0]);
+    ch.data.datasets[0].data=pairs.map(p=>p[1]);
+    ch.data.datasets[0].backgroundColor=barColors(ch.data.labels,dim);
+    ch.update();
+  }
+  function render(){
+    renderKPIs();
+    const dRows=forDim('dept').filter(e=>e.status==='Active');
+    setBar(charts.dept,topN(countBy(dRows,'dept'),5),'dept');
+    const sd={};dRows.forEach(e=>{(sd[e.dept]=sd[e.dept]||[]).push(e.salary);});
+    setBar(charts.salDept,topN(Object.fromEntries(Object.entries(sd).map(([k,v])=>[k,Math.round(avg(v))])),5),'dept');
+    const yRows=forDim('year').filter(e=>e.status==='Active');
+    const yc=countBy(yRows,e=>e.hire.slice(0,4));const years=Object.keys(yc).sort();
+    charts.year.data.labels=years;charts.year.data.datasets[0].data=years.map(y=>yc[y]);
+    const ySel=F.year;
+    charts.year.data.datasets[0].pointBackgroundColor=years.map(y=>ySel?(y===ySel?P:PD):P);
+    charts.year.update();
+    const bRows=forDim('band').filter(e=>e.status==='Active');
+    const bc=countBy(bRows,e=>bandOf(e.salary));
+    setBar(charts.dist,BANDS.map(b=>[b[0],bc[b[0]]||0]),'band');
+    const gRows=forDim('gender');
+    const gmap={};gRows.forEach(e=>{(gmap[e.gender]=gmap[e.gender]||[]).push(e.salary);});
+    const gpairs=Object.entries(gmap).map(([k,v])=>[k,Math.round(avg(v))]).sort((a,b)=>b[1]-a[1]);
+    setBar(charts.gender,gpairs,'gender');
+    const tRows=forDim('dept');
+    const tot={},term={};tRows.forEach(e=>{tot[e.dept]=(tot[e.dept]||0)+1;if(e.status==='Terminated')term[e.dept]=(term[e.dept]||0)+1;});
+    const tp=Object.keys(tot).map(d=>[d,Math.round((term[d]||0)/tot[d]*100)]).filter(p=>p[1]>0).sort((a,b)=>b[1]-a[1]).slice(0,6);
+    setBar(charts.turn,tp,'dept');
+    renderChips();syncPanel();
+  }
+  function renderChips(){
+    const labels={dept:'Dept',gender:'Gender',year:'Year',band:'Salary',status:'Status',rating:'Rating'};
+    const active=Object.keys(F).filter(k=>F[k]);
+    const box=document.getElementById('chips');
+    document.getElementById('rFilter').classList.toggle('has',active.length>0);
+    if(!active.length){box.innerHTML='<span class="none">No filters · click a chart to drill in</span>';return;}
+    box.innerHTML=active.map(k=>`<span class="chip"><span class="k">${labels[k]}</span> ${F[k]} <button data-k="${k}" aria-label="remove">×</button></span>`).join('')
+      +'<button class="clearall" id="chipClear">Clear all</button>';
+    box.querySelectorAll('.chip button').forEach(b=>b.onclick=()=>{F[b.dataset.k]=null;render();});
+    document.getElementById('chipClear').onclick=clearAll;
+  }
+  document.getElementById('rClear').onclick=clearAll;
+  const uniq=arr=>[...new Set(arr)];
+  const sels={dept:'fDept',gender:'fGender',status:'fStatus',rating:'fRating',year:'fYear',band:'fBand'};
+  function fill(id,opts,allLabel){
+    document.getElementById(id).innerHTML='<option value="">'+allLabel+'</option>'+
+      opts.map(o=>`<option value="${o}">${o}</option>`).join('');
+  }
+  fill('fDept',uniq(E.map(e=>e.dept)).sort(),'All departments');
+  fill('fGender',uniq(E.map(e=>e.gender)).sort(),'All genders');
+  fill('fStatus',uniq(E.map(e=>e.status)).sort(),'All statuses');
+  fill('fRating',uniq(E.map(e=>e.rating)).sort((a,b)=>a-b).map(r=>r+' ★'),'All ratings');
+  fill('fYear',uniq(E.map(e=>e.hire.slice(0,4))).sort(),'All hire years');
+  fill('fBand',BANDS.map(b=>b[0]),'All salary bands');
+  document.getElementById('fRating').querySelectorAll('option').forEach(o=>{if(o.value)o.value=o.value.split(' ')[0];});
+  Object.entries(sels).forEach(([dim,id])=>{
+    document.getElementById(id).onchange=e=>{F[dim]=e.target.value||null;render();};
+  });
+  function syncPanel(){
+    Object.entries(sels).forEach(([dim,id])=>{
+      const s=document.getElementById(id);s.value=F[dim]||'';s.classList.toggle('set',!!F[dim]);
+    });
+  }
+  const drawer=document.getElementById('drawer'),scrim=document.getElementById('scrim');
+  const openDrawer=()=>{drawer.classList.add('show');scrim.classList.add('show');drawer.setAttribute('aria-hidden','false');};
+  const closeDrawer=()=>{drawer.classList.remove('show');scrim.classList.remove('show');drawer.setAttribute('aria-hidden','true');};
+  document.getElementById('rFilter').onclick=openDrawer;
+  document.getElementById('drawerClose').onclick=closeDrawer;
+  document.getElementById('drawerApply').onclick=closeDrawer;
+  document.getElementById('drawerReset').onclick=clearAll;
+  scrim.onclick=closeDrawer;
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer();});
+  document.getElementById('stamp').textContent='Snapshot · '+new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  render();
+})();
+</script>
+</body>
+</html>
